@@ -35,7 +35,7 @@ description: 浏览器驱动的 QA 测试执行方法论。用户（QA 工程师
 
   `id` 用作 AC 的 `@site` 标注、session 后缀（`$SID-<id>`）；**截图前缀只在跨站测试时带**（单站截图不带站前缀，见下方截图样例 `03-after-login.png` / `17a-3-selected.png`）。同一个站的 `id` 跨环境保持一致。
 
-- 一次测试 = **选一个环境** + 在其中作用于 **一个或多个站**。单站是最常见情形（N=1）；涉及多个站（跨站联动）按下面的「跨站测试」执行。
+- 一次测试 = **选一个环境** + 在其中作用于 **一个或多个站**。单站是最常见情形（N=1）；涉及多个站（跨站联动）按下面的「跨站测试」一节执行（细节在 `reference/cross-site.md`）。
 - **测哪个环境、是否跨站、涉及哪几个站，都由用户在意图 / AC 阶段说清**——不自己猜，也没有预存的"场景"文件。开始前读对应的 `targets/<env>.md` 取各站 URL。
 
 ## 工作流总览
@@ -253,107 +253,21 @@ cookie 用全项目**同一份全量** `secrets/cookies-all.json`——含你 Ch
    - 进站成功的特征是出现应用内真实数据 / UI（如列表、`Showing N results`、`Customize columns`）。
    - 注意被测站是 SPA，进站后正文常先只有占位文本（如 "QA"），数据是异步拉的——用 `browser-use --session $SID wait text "Showing"`（或某个稳定文案）等内容落地后再截图，不要立刻截。
 
-3. 如果第 2 步发现仍停在登录入口 → **判定 cookie 已过期或不存在**（`SessionId` 是会话级、无持久过期时间，服务端 session 超时即失效）。停下来提示用户重新导出 cookie（见下方「导出 / 刷新 cookie」），**不要** 自己瞎点 `Enter` 或尝试输账号密码。
+3. 如果第 2 步发现仍停在登录入口 → **判定 cookie 已过期或不存在**（`SessionId` 是会话级、无持久过期时间，服务端 session 超时即失效）。停下来提示用户重新导出 cookie（A1 流程见 `reference/browser-setup.md`），**不要** 自己瞎点 `Enter` 或尝试输账号密码。
 
-### 跨站：每站一个 session
+### 例外路径（按需深读，不在此展开）
 
-单站测试就一个 session（上面的 `$SID`）。**跨站测试**（同一环境下碰多个站）时，cookie 不变——还是同一份全量 `secrets/cookies-all.json`，它本来就含所有站。差别只在 **session**：本次涉及的每个站起一个 **独立 session**，名 = `$SID-<site-id>`（如 `$SID-portal` / `$SID-billing`），这样各站页面同时活着，在 A 操作完切到 B 直接看，不丢 B 的 filter / 滚动状态。遍历本次站清单（`ac.md` 的 `## 站` 块）批量起，每个都导入同一份全量 cookie：
+下面这些**不是默认路径**，撞到对应信号时再去读 `reference/browser-setup.md`：
 
-```bash
-# 对清单里每个涉及的站（id=xxx / ...）：
-browser-use --session $SID-portal  open <portal 目标页>      # URL 从 targets/<env>.md 取
-browser-use --session $SID-portal  cookies import secrets/cookies-all.json
-browser-use --session $SID-portal  open <portal 目标页>      # import 后必须重新 open 才生效
-```
-
-**逐站验证进站，不要因为是全量就假设 N 个站全活**：对每个 session 单独 dump 关键文案确认进了应用内（特征见「默认路径」第 2 步）。任一站仍停在登录入口 → 判定该站 cookie 失效，停下来提示重新导出全量，**不要** 自己瞎点。测完对每个 `$SID-<id>` 都 `close`。
-
-### 多终端并行
-
-可以同时开多个终端各跑一个 run，前提是上面的 session 名用各自 run-id 区分（否则共用浏览器实例会互相搅乱页面）。产物目录天然按 run-id 隔离，不会互相覆盖。
-
-但有一条限制工具层面保证不了，**靠用户协调**：多个终端导入的是同一份 cookie、同一个后端账号，所以**破坏性 / 改写真实数据的 AC 不要跨终端并行跑**——A 终端改的数据会被 B 终端看到甚至覆盖，两边结论都不可信。每个终端只看得到自己的 run，看不到别的终端在干什么，**没法自动检测到这种冲突**。所以：
-
-- 纯读 / 探索 / 集合断言类 AC → 随便几个终端并行，无所谓。
-- 如果你（执行者）发现自己这个 run 里有破坏性 AC，**主动提醒这个并发写风险**，让用户决定是否继续。
-
-### 导出 / 刷新 cookie（A1 流程，cookie 失效时重做）
-
-cookie 由用户已登录的 Chrome 导出，只在初次配置或 cookie 过期时做一次。导出**全量**（不带 `--url`），一份覆盖所有站、所有环境，无需切 tab、无需逐站导：
-
-```bash
-browser-use connect                                   # 接管用户的 Chrome（需先开远程调试，见下）
-browser-use cookies export secrets/cookies-all.json   # 不带 --url = 全量，含所有站 / 环境
-```
-
-`connect` 需要用户的 Chrome 开了远程调试。如果 `connect` 失败，告诉用户：
-
-> 没有检测到开了远程调试的 Chrome。请先关掉当前 Chrome，然后用这个命令重新启动：
->
-> ```
-> open -a "Google Chrome" --args --remote-debugging-port=9222
-> ```
->
-> 启动后告诉我，我重试 connect。
-
-然后等待。
-
-### 备选路径：直接 connect 接管用户 Chrome
-
-当 **用户需要实时介入**（手动过验证码、临时人工操作、或就是想盯着看）时，可以放弃 headless，直接 `browser-use connect` 接管用户当前 Chrome。connect 成功后执行一次 `browser-use state` 确认活跃 tab；用户开了多个 tab 时主动问哪个是被测对象，**不要** 自行假设。
-
-除非用户明确要求，否则 **不要** 尝试自动化登录流程（输账号密码等）—— 纯 cookie 注入已经够用。
+- **cookie 失效 / 不存在**（上面第 2 步验证发现仍停在登录入口）→ 重新导出全量 cookie 的 A1 流程。
+- **用户要实时介入**（手动过验证码、临时人工操作、想盯着看）→ 放弃 headless、`connect` 接管用户 Chrome 的备选路径。
+- **多开终端并行跑多个 run** → session 隔离与并发写风险约定。
 
 ## 跨站测试（多站场景）
 
-当用户在意图 / AC 阶段声明本次测试要在 **同一环境下的多个站** 之间联动（在 A 操作、在 B / C 观察效果），启用这一节。**只在涉及 ≥2 个站时启用**；单站测试一切照旧——`ac.md` **不写** `## 站` 块、session 用裸 `$SID`、截图**不带**站前缀。核心原则：**cookie 这层塌成一份全量，但"站"作为产物维度始终保留**——否则报告说不清"在哪操作、在哪观察"。
+**只在一次测试涉及 ≥2 个站时启用。** 单站测试（最常见，N=1）一切照旧——`ac.md` **不写** `## 站` 块、session 用裸 `$SID`、截图**不带**站前缀，不用管这节。
 
-- **环境是 run 级的、单一的**：一个跨站测试始终在一个环境内（全程 qa 或全程 uat），不混。开始前读对应的 `targets/<env>.md` 拿到本环境的站清单（`id → URL`）。
-- **本次涉及哪几个站 + 各自角色（操作端 / 观察端），由用户在 AC 阶段说清**，记进该 run 的 `ac.md` 一个 `## 站` 块：每行 `@<id> → 本环境 URL + 角色`。这份 `## 站` 块就是本次的**站清单**——起 session、`@site` 标注都按它来。
-
-> 浏览器 / session / cookie 怎么开是机制，统一在「浏览器接入 → 跨站：每站一个 session」，不在这里重复。本节只讲跨站测试本身怎么设计与判定。
-
-### "站"维度贯穿所有产物
-
-cookie 全量了不代表站可以省。每个产物都带一个 site 标签，数量无关（2 / 3 / N 同一套）：
-
-- **AC 步骤**：每个 step 标 `@<site-id>`，site-id 来自 `targets/<env>.md` 的站清单。一个主 `When`（在某个操作端），`Then` 可以是多站的 `And` 列表（扇出观察），异步生效的观察把超时窗口写进 `Then`：
-
-  ```gherkin
-  AC-1: admin 开启 Auto-dispatch 后，portal 与 billing 同步生效
-    Given @admin 规则页显示 "Auto-dispatch: OFF"
-      And @portal 列表顶部无 "Auto" 标记
-    When @admin 把 "Auto-dispatch" 切到 ON 并点 "Save"
-    Then @admin 出现保存成功提示 "Saved"
-      And @portal 刷新后列表顶部出现 "Auto" 标记
-      And @billing 在 60s 内出现一条 type="auto-dispatch" 的计费记录
-  ```
-
-- **截图**：站名进 slug，如 `17-portal-auto-badge.png` / `18-billing-record.png`。`ac.md` 的截图清单按 `@site` 分别列。
-- **session**：`$SID-<site-id>`，如上。
-
-### 多站扇出观察（一个 When，多个 Then@site）
-
-一个操作端的动作常要在多个观察端分别验证生效。这种 AC 的 `Then` 是 **多站的 And 列表**，每个站 **独立判定、独立截图、独立超时**——不要糊成一段。`report.md` 里这条 AC 的"观察"按站分行：
-
-```
-- 观察:
-  - @portal: 刷新后列表顶部出现 "Auto" 标记 — 符合
-  - @billing: 90s 内未见 type="auto-dispatch" 计费记录 — 不符合（预期 60s 内）
-```
-
-任一站不符合，整条 AC 判 ❌ / ⚠️，并指明是哪个站断的。
-
-### 跨站时序链：每跳留证据 + 轮询超时
-
-跨站传播往往 **不是同步的**（中间隔着队列、消息、最终一致性），且常常 **有先后依赖**（admin 配完 portal 才出入口，portal 提交后 billing 才落账）。两条纪律：
-
-1. **每一跳都留证据**。`@admin 操作 → @portal 生效 → @billing 落账` 这条链，每跳都 dump + 截图。否则最后只看到 `@billing` 没数据，根本分不清是 admin 没生效、还是 portal 没提交、还是 billing 还没传到。
-2. **异步观察用轮询 + 明确超时，不要盲 sleep**。`Then` 里写清超时窗口（如 "60s 内"），用 `browser-use --session $SID-billing wait text "..."` 配 `--timeout`，或固定间隔轮询直到出现 / 超时。**超时不等于 fail**：构造得出的失败才判 ❌；只是没等到、原因不明的，判 `needs human review` 并在 Open question 里写清等了多久、轮询了几次。
-
-### 并发写风险（跨站尤其要警惕）
-
-机制与处理规则同「浏览器接入 → 多终端并行」，不在此重复。跨站特有的点只有一个：跨站的操作端动作 **通常本身就是写操作**，所以那条"破坏性 / 改写真实数据的 AC 不要跨终端 / 跨 run 并行跑"的风险，在跨站时几乎必然命中——发现本 run 有这类跨站 AC，照样主动提醒、让用户决定是否串行。
+当用户在意图 / AC 阶段声明要在 **同一环境下的多个站** 之间联动（在 A 操作、在 B / C 观察效果），**完整读 `reference/cross-site.md`** 再开工——那里讲清了每站一个 session 的浏览器开法、`@site` 维度如何贯穿 AC / 截图 / 报告、多站扇出观察、跨站时序链与轮询超时、以及跨站并发写风险。核心原则一句话先记住：**cookie 塌成一份全量，但"站"作为产物维度始终保留**，否则报告说不清"在哪操作、在哪观察"。
 
 ## 执行约束
 
