@@ -5,6 +5,7 @@
     "email": "jasonhuang@xm.wonder.com"
   },
   "description": "QA 测试 / 浏览器自动化工具集",
+  "allowCrossMarketplaceDependenciesOn": ["claude-plugins-official"],
   "plugins": [
     {
       "name": "qa-copilot",
