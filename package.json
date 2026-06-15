@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "name": "qa-copilot-plugin",
+  "version": "1.0.2",
+  "scripts": {
+    "bump": "ccbump"
+  },
+  "packageManager": "pnpm@11.6.0",
+  "devDependencies": {
+    "ccbump": "^0.2.1"
+  }
+}
