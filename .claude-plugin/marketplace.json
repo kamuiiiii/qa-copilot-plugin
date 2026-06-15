@@ -5,15 +5,11 @@
     "email": "jasonhuang@xm.wonder.com"
   },
   "description": "QA 测试 / 浏览器自动化工具集",
-  "metadata": {
-    "version": "1.0.3"
-  },
   "plugins": [
     {
       "name": "qa-copilot",
       "source": "./plugins/qa-copilot",
-      "description": "浏览器驱动的 QA 测试执行方法论。依赖 browser-use skill。",
-      "version": "1.0.3"
+      "description": "浏览器驱动的 QA 测试执行方法论。依赖 browser-use skill。"
     }
   ]
 }
