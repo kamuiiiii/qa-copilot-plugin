@@ -11,7 +11,10 @@ qa-copilot-plugin/                       ← 本仓库 = marketplace 根
 ├── .claude-plugin/marketplace.json      ← marketplace 清单
 ├── plugins/qa-copilot/
 │   ├── .claude-plugin/plugin.json
-│   └── skills/qa-copilot/SKILL.md       ← 纯方法论
+│   └── skills/qa-copilot/
+│       ├── SKILL.md                     ← 核心方法论
+│       └── reference/                   ← 按需深读：cross-site.md / browser-setup.md
+├── templates/targets.example.md         ← 新产品仓库拷这个建 targets/<env>.md
 └── README.md
 ```
 
@@ -90,7 +93,20 @@ qa-copilot-plugin/                       ← 本仓库 = marketplace 根
 └── runs/                     ← 测试产物（.gitignore）
 ```
 
-`targets/` 由各人自己动态增改——加站就往表里加一行。每个产品仓库的 `CLAUDE.md` 只写产品身份和特异行为，**方法论不重复**，统一走本插件的 skill。
+每个产品仓库的 `CLAUDE.md` 只写产品身份和特异行为，**方法论不重复**，统一走本插件的 skill。
+
+### 设置 targets
+
+`targets/<env>.md` 是 skill 运行时读的被测站清单——一个文件 = 一个环境。本仓库 `templates/targets.example.md` 是带注释的起点：
+
+1. **拷模版**：把 `templates/targets.example.md` 拷成你环境对应的文件（`targets/qa.md`、`targets/uat.md` …），改标题、`- **环境**:` 和表里的占位 URL。
+2. **填表**：每站一行 `| id | URL | 说明 |`。`id` 取短横线小写、语义清晰（`portal` / `order` / `billing` …），它会被用作 AC 里的 `@site` 标注、session 后缀（`$SID-<id>`）、截图前缀。
+3. **id 跨环境同名**：同一个站在 `qa.md` 和 `uat.md` 里必须叫同一个 `id`，这样跨环境复测时 AC 的 `@site` 无需改动。
+4. **加站 = 表里加一行；加环境 = 复制一个文件**改环境名（各站 id 与已有环境保持一致，URL 换成该环境的）。
+
+不要写进 targets 的：角色（操作端 / 观察端，每次测试在该 run 的 `ac.md` 里定）、登录态（在 `secrets/cookies-all.json`）、一次性的测试范围。
+
+> 首次在一个还没有 `targets/<env>.md` 的新仓库里跑 qa-copilot 时，skill 会发现清单缺失、停下来按这套规则引导你补，不会瞎猜 URL。
 
 ## 升级方法论
 
