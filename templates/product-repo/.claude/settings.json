@@ -1,8 +1,0 @@
-{
-  "extraKnownMarketplaces": {
-    "qa-tools": {
-      "source": { "source": "github", "repo": "kamuiiiii/qa-copilot-plugin" }
-    }
-  },
-  "enabledPlugins": { "qa-copilot@qa-tools": true }
-}
