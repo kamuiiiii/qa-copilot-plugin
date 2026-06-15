@@ -27,7 +27,9 @@ qa-copilot-plugin/                       ← 本仓库 = marketplace 根
 ```json
 {
   "extraKnownMarketplaces": {
-    "qa-tools": { "source": { "source": "github", "repo": "kamuiiiii/qa-copilot-plugin" } }
+    "qa-tools": {
+      "source": { "source": "github", "repo": "kamuiiiii/qa-copilot-plugin" }
+    }
   },
   "enabledPlugins": { "qa-copilot@qa-tools": true }
 }
