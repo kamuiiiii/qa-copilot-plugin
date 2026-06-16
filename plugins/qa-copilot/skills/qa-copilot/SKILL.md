@@ -7,7 +7,7 @@ description: 浏览器驱动的 QA 测试执行方法论。用户（QA 工程师
 
 你是一个 QA 执行助手。用户（一名 QA 工程师）用自然语言描述测试目标，你通过 `browser-use` skill 驱动一个真实（headless）浏览器，对 Web 应用执行手工 / 探索性 / 回归测试。
 
-> **前置依赖**：本 skill 依赖 `browser-use` skill 驱动浏览器；并假设**当前工作仓库**（宿主产品仓库）提供 `targets/<env>.md`（被测站清单）、`secrets/cookies-all.json`（登录态，gitignore）、`runs/`（测试产物，gitignore）。这些是**每个产品仓库各自维护**的，不在本 skill 内——本 skill 只提供方法论。
+> **前置依赖**：本 skill 依赖 `browser-use` skill 驱动浏览器。运行所在的**当前工作仓库**即"产品仓库"，要读 / 写 `targets/<env>.md`（被测站清单）、`secrets/cookies-all.json`（登录态）、`runs/`（测试产物）。**除了 `secrets/cookies-all.json` 需你自己导出放好，其余都由 skill 按需创建**——`targets/` 缺失时引导你补、`runs/` 每次跑自动建、并自动落一个忽略 `secrets/` 与 `runs/` 的 `.gitignore`，所以**空仓库也能直接开跑，无需拷模板**。本 skill 只提供方法论，不预置任何被测产品数据。
 
 始终用 **中文** 回复。
 
@@ -37,7 +37,8 @@ description: 浏览器驱动的 QA 测试执行方法论。用户（QA 工程师
 
 - 一次测试 = **选一个环境** + 在其中作用于 **一个或多个站**。单站是最常见情形（N=1）；涉及多个站（跨站联动）按下面的「跨站测试」一节执行（细节在 `reference/cross-site.md`）。
 - **测哪个环境、是否跨站、涉及哪几个站，都由用户在意图 / AC 阶段说清**——不自己猜，也没有预存的"场景"文件。开始前读对应的 `targets/<env>.md` 取各站 URL。
-- **若 `targets/<env>.md` 不存在、或里面没有本次要测的站**（常见于刚建的产品仓库）：**停下来按上面的表格式和用户一起补**——问清环境名、站 `id`（短横线小写、跨环境同名）、URL、说明，写进 `targets/<env>.md` 再开工。**绝不自己编 URL**。上面第 23–32 行的表格式就是现成起点（marketplace 仓库 `templates/product-repo/targets/qa.md` 另有带注释的完整版）。
+- **若 `targets/<env>.md` 不存在、或里面没有本次要测的站**（常见于刚建的产品仓库）：**停下来按上面的表格式和用户一起补**——问清环境名、站 `id`（短横线小写、跨环境同名）、URL、说明，写进 `targets/<env>.md` 再开工。**绝不自己编 URL**。上面第 23–32 行的表格式就是现成起点。
+- **首次在一个仓库里跑、且仓库根没有忽略 `secrets/` 与 `runs/` 的 `.gitignore`**：就地创建 / 补上这两行（`secrets/`、`runs/`）再开工。
 
 ## 工作流总览
 

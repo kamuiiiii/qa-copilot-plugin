@@ -1,7 +1,7 @@
 {
   "name": "qa-copilot",
   "description": "浏览器驱动的 QA 测试执行方法论：意图 → AC（Gherkin）→ headless 浏览器执行 → 截图证据 → report.md 报告。依赖 browser-use skill；并依赖 atlassian 插件（Jira/Confluence）。",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "author": {
     "name": "Jason Huang",
     "email": "jasonhuang@xm.wonder.com"
