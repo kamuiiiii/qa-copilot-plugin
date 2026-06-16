@@ -13,7 +13,7 @@ qa-copilot-plugin/                       ← 本仓库 = marketplace 根
 │   ├── .claude-plugin/plugin.json
 │   └── skills/qa-copilot/
 │       ├── SKILL.md                     ← 核心方法论
-│       └── reference/                   ← 按需深读：cross-site.md / browser-setup.md
+│       └── reference/                   ← 按需深读：bootstrap.md（首次初始化）/ cookie-export.md（导出登录态）/ cross-site.md（跨站）
 └── README.md
 ```
 

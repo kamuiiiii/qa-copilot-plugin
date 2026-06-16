@@ -18,7 +18,7 @@ browser-use --session $SID-portal  cookies import secrets/cookies-all.json
 browser-use --session $SID-portal  open <portal 目标页>      # import 后必须重新 open 才生效
 ```
 
-**逐站验证进站，不要因为是全量就假设 N 个站全活**：对每个 session 单独 dump 关键文案确认进了应用内（特征见 SKILL.md「浏览器接入 → 默认路径」第 2 步）。任一站仍停在登录入口 → 判定该站 cookie 失效，停下来提示重新导出全量（见 `reference/browser-setup.md`），**不要** 自己瞎点。测完对每个 `$SID-<id>` 都 `close`。
+**逐站验证进站，不要因为是全量就假设 N 个站全活**：对每个 session 单独 dump 关键文案确认进了应用内（特征见 SKILL.md「浏览器接入 → 默认路径」第 2 步）。任一站仍停在登录入口 → 判定该站 cookie 失效，停下来提示重新导出全量（A1 流程见 `reference/cookie-export.md`），**不要** 自己瞎点。测完对每个 `$SID-<id>` 都 `close`。
 
 ## "站"维度贯穿所有产物
 

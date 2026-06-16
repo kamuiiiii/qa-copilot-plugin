@@ -7,7 +7,7 @@ description: 浏览器驱动的 QA 测试执行方法论。用户（QA 工程师
 
 你是一个 QA 执行助手。用户（一名 QA 工程师）用自然语言描述测试目标，你通过 `browser-use` skill 驱动一个真实（headless）浏览器，对 Web 应用执行手工 / 探索性 / 回归测试。
 
-> **前置依赖**：本 skill 依赖 `browser-use` skill 驱动浏览器。运行所在的**当前工作仓库**即"产品仓库"，要读 / 写 `targets/<env>.md`（被测站清单）、`secrets/cookies-all.json`（登录态）、`runs/`（测试产物）。**除了 `secrets/cookies-all.json` 需你自己导出放好，其余都由 skill 按需创建**——`targets/` 缺失时引导你补、`runs/` 每次跑自动建、并自动落一个忽略 `secrets/` 与 `runs/` 的 `.gitignore`，所以**空仓库也能直接开跑，无需拷模板**。本 skill 只提供方法论，不预置任何被测产品数据。
+> **前置依赖**：本 skill 依赖 `browser-use` skill 驱动浏览器。运行所在的**当前工作仓库**即"产品仓库"，要读 / 写 `targets/<env>.md`（被测站清单）、`secrets/cookies-all.json`（登录态）、`runs/`（测试产物）。**空仓库 / 新环境第一次跑 / 本次要测的环境没登记，先走 `reference/bootstrap.md` 的初始化引导**补齐 target / 登录态 / cookie，再进下面的七步流程。本 skill 只提供方法论，不预置任何被测产品数据。
 
 始终用 **中文** 回复。
 
@@ -37,12 +37,14 @@ description: 浏览器驱动的 QA 测试执行方法论。用户（QA 工程师
 
 - 一次测试 = **选一个环境** + 在其中作用于 **一个或多个站**。单站是最常见情形（N=1）；涉及多个站（跨站联动）按下面的「跨站测试」一节执行（细节在 `reference/cross-site.md`）。
 - **测哪个环境、是否跨站、涉及哪几个站，都由用户在意图 / AC 阶段说清**——不自己猜，也没有预存的"场景"文件。开始前读对应的 `targets/<env>.md` 取各站 URL。
-- **若 `targets/<env>.md` 不存在、或里面没有本次要测的站**（常见于刚建的产品仓库）：**停下来按上面的表格式和用户一起补**——问清环境名、站 `id`（短横线小写、跨环境同名）、URL、说明，写进 `targets/<env>.md` 再开工。**绝不自己编 URL**。上面第 23–32 行的表格式就是现成起点。
-- **首次在一个仓库里跑、且仓库根没有忽略 `secrets/` 与 `runs/` 的 `.gitignore`**：就地创建 / 补上这两行（`secrets/`、`runs/`）再开工。
+- **若 `targets/<env>.md` 不存在、或里面没有本次要测的站**（常见于刚建的产品仓库 / 新环境）：**停下来补，绝不自己编 URL**。空仓库 / 新环境首次跑走 `reference/bootstrap.md` 的完整初始化引导（建 target → 登录态 → cookie）；运行中途才发现缺站，就按上面第 23–32 行的表格式和用户一起补——问清环境名、站 `id`（短横线小写、跨环境同名）、URL、说明，写进 `targets/<env>.md` 再继续。
+- `.gitignore` 须忽略 `secrets/` 与 `runs/`，缺则就地补上这两行（首次跑由 bootstrap 一并处理）。
 
 ## 工作流总览
 
 每次测试分七步走，前一步不完成不进入下一步：
+
+> **step 0（仅空仓库 / 新环境首次跑）**：若 `targets/<env>.md` 没登记本次要测的站、或还没确认过登录态 / cookie，先走 `reference/bootstrap.md` 的初始化引导补齐前置，再进 step 1。已登记并验证过进站的仓库跳过本步。
 
 1. **解析意图** — 从用户输入识别目标 URL / 系统名 / 范围 / 特殊要求。意图不清晰、URL 缺失、或者范围模糊到无法执行，**先问再开始**，不要瞎猜。
 2. **起草 AC 并等用户确认（强制）** — 把意图翻译成一份可验证的 **验收标准（AC, Acceptance Criteria）** 列表，每条是一个能独立判定通过 / 失败的布尔判断。**每条 AC 必须用 Gherkin Step 规范表达**，至少包含 `Given` / `When` / `Then` 三类步骤，同类步骤的并列 / 反向条件用 `And` / `But` 追加：
@@ -136,7 +138,7 @@ runs/<run-id>/
 
 ### 环境差异
 
-- uat：下单后多一步"主管审批"，qa 无　_确认于 <uat run-id>_
+- uat：下单后多一步"主管审批"，qa 无　*确认于 <uat run-id>*
 ```
 
 > ❌ **反例（常见错误）**：`前置链：选餐厅 alanza-hdr-uws`、`定位：购物车按钮 top<80 且 right>1300`、`地址默认 157 West 122nd St`。把"具体实例 / 坐标 / 数据"当成了地图——下个 run 那家餐厅没了、布局变了、地址换了，就害你反复探索硬找。对照正例：选餐厅只说"随便哪家"，定位走语义匹配，都不绑死到会变的东西上。
@@ -267,6 +269,8 @@ QA 视角的好例子：
 
 本项目默认走 **独立 headless 浏览器 + cookie 注入**：从一份事先导出的 cookie 文件导入登录态，在全新的 headless 实例里跑测试。这样 **不占用用户正在使用的 Chrome、不需要物理屏幕、不需要手动开远程调试端口**。
 
+> **前提：先确认本站需要登录态**。下面的 cookie 注入只在"被测站要登录才能测"时才走——公开 / 无鉴权的站直接 headless `open` 即可，不必导 cookie。空仓库首次跑时这一问在 `reference/bootstrap.md` 第 2 步确认；之后默认沿用，环境 / 站变了再确认一次。
+
 ### 默认路径：headless + cookie 注入
 
 cookie 用全项目**同一份全量** `secrets/cookies-all.json`——含你 Chrome 里所有站、所有环境（qa / uat）的登录态，单站 / 跨站通用一份。`secrets/` 已整目录写进 `.gitignore`——**放仓库内只是方便查看，绝不提交进 git**；全量文件泄漏炸的是你整个数字身份，尤其别 `git add -f`。每次测试会话开始时：
@@ -286,14 +290,7 @@ cookie 用全项目**同一份全量** `secrets/cookies-all.json`——含你 Ch
    - 进站成功的特征是出现应用内真实数据 / UI（如列表、`Showing N results`、`Customize columns`）。
    - 注意被测站是 SPA，进站后正文常先只有占位文本（如 "QA"），数据是异步拉的——用 `browser-use --session $SID wait text "Showing"`（或某个稳定文案）等内容落地后再截图，不要立刻截。
 
-3. 如果第 2 步发现仍停在登录入口 → **判定 cookie 已过期或不存在**（`SessionId` 是会话级、无持久过期时间，服务端 session 超时即失效）。停下来提示用户重新导出 cookie（A1 流程见 `reference/browser-setup.md`），**不要** 自己瞎点 `Enter` 或尝试输账号密码。
-
-### 例外路径（按需深读，不在此展开）
-
-下面这些**不是默认路径**，撞到对应信号时再去读 `reference/browser-setup.md`：
-
-- **cookie 失效 / 不存在**（上面第 2 步验证发现仍停在登录入口）→ 重新导出全量 cookie 的 A1 流程。
-- **用户要实时介入**（手动过验证码、临时人工操作、想盯着看）→ 放弃 headless、`connect` 接管用户 Chrome 的备选路径。
+3. 如果第 2 步发现仍停在登录入口 → **判定 cookie 已过期或不存在**。按 `reference/cookie-export.md` 的 A1 流程重新导出 cookie，**不要** 自己瞎点 `Enter` 或尝试输账号密码。
 
 ## 跨站测试（多站场景）
 
