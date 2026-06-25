@@ -35,8 +35,9 @@
 
   - `targets/<env>.md` — 各环境的被测站清单(qa / uat …)，站 URL 的唯一来源
   - `secrets/cookies-all.json` — 登录态(gitignored，**绝不提交**)
-  - `runs/<run-id>/` — 每轮测试产物(ac.md / 截图 / report.md)
+  - `runs/<run-id>/` — 每轮测试产物(ac.md / 截图 / report.md)，每轮冻结、互相隔离
   - `notes/<site>.md` — 跨 run 的导航 / 定位地图(可选)
+  - `specs/<flow>.md` — 跨 run 复用的 AC 规范 / 测试用例母本(按流程切，可选)
 
   ## 起测
 
